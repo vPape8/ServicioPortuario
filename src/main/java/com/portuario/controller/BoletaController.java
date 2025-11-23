@@ -3,12 +3,14 @@ package com.portuario.controller;
 import com.portuario.model.Boleta;
 import com.portuario.repository.BoletaRepository;
 import com.portuario.service.BoletaService;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.List;
 
 @RestController
@@ -21,33 +23,35 @@ public class BoletaController {
     private final BoletaService boletaService;
 
     @GetMapping
-    public ResponseEntity<List<Boleta>> listarTodos() {
+    public ResponseEntity<List<Boleta>> getAll() {
         return ResponseEntity.ok(boletaRepository.findAll());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Boleta> buscarPorId(@PathVariable String id) {
+    public ResponseEntity<Boleta> getById(@PathVariable String id) {
         return boletaRepository.findById(id)
                 .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<Boleta> guardar(@RequestBody Boleta boleta) {
-        return new ResponseEntity<>(boletaRepository.save(boleta), HttpStatus.CREATED);
+    public ResponseEntity<Boleta> create(@RequestBody Boleta boleta) {
+        Boleta saved = boletaRepository.save(boleta);
+        return ResponseEntity.created(URI.create("/api/boletas/" + saved.getIdBoleta())).body(saved);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Boleta> actualizar(@PathVariable String id, @RequestBody Boleta boleta) {
+    public ResponseEntity<Boleta> update(@PathVariable String id, @RequestBody Boleta boleta) {
         if (!boletaRepository.existsById(id)) {
             return ResponseEntity.notFound().build();
         }
         boleta.setIdBoleta(id);
-        return ResponseEntity.ok(boletaRepository.save(boleta));
+        Boleta updated = boletaRepository.save(boleta);
+        return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminar(@PathVariable String id) {
+    public ResponseEntity<Void> delete(@PathVariable String id) {
         if (!boletaRepository.existsById(id)) {
             return ResponseEntity.notFound().build();
         }
@@ -57,11 +61,17 @@ public class BoletaController {
 
     @PostMapping("/calcular")
     public ResponseEntity<Boleta> calcular(@RequestBody CalculoRequest request) {
-        Boleta boleta = boletaService.generarBoleta(request.getCodBuque(), request.getIdPuerto(), request.getIdFuncionario());
-        return new ResponseEntity<>(boleta, HttpStatus.CREATED);
+        Boleta boleta = boletaService.crearYGuardarBoleta(
+                request.getCodBuque(),
+                request.getIdPuerto(),
+                request.getIdFuncionario()
+        );
+        return ResponseEntity.created(URI.create("/api/boletas/" + boleta.getIdBoleta())).body(boleta);
     }
 
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class CalculoRequest {
         private String codBuque;
         private Integer idPuerto;
