@@ -69,6 +69,39 @@ public class BoletaController {
         return ResponseEntity.created(URI.create("/api/boletas/" + boleta.getIdBoleta())).body(boleta);
     }
 
+    // ... código existente ...
+
+    // NUEVO: Endpoint para recibir datos manuales
+    @PostMapping("/simular")
+    public ResponseEntity<Double> simular(@RequestBody SimulacionRequest request) {
+        // Manejo de nulos para seguridad
+        int pas = request.getPasajeros() != null ? request.getPasajeros() : 0;
+        String serv = request.getServicios() != null ? request.getServicios() : "basico";
+
+        double costo = boletaService.calcularSimulacion(
+                request.getEslora(),
+                request.getDias(),
+                request.getTipoBuque(),
+                serv,
+                pas
+        );
+        return ResponseEntity.ok(costo);
+    }
+
+    // DTO interno para recibir el JSON manual
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SimulacionRequest {
+        private Double eslora;
+        private Integer dias;
+        private String tipoBuque;
+        private String servicios;
+        private Integer pasajeros;
+    }
+
+
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor

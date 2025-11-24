@@ -40,9 +40,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String token = authHeader.substring(7);
         if (jwtUtils.validateToken(token) && SecurityContextHolder.getContext().getAuthentication() == null) {
-            String username = jwtUtils.getUsername(token);
+            String email = jwtUtils.getUsername(token); // subject contiene el email
 
-            Optional<Usuario> maybeUser = usuarioRepository.findByUsername(username);
+            Optional<Usuario> maybeUser = usuarioRepository.findByEmail(email);
             if (maybeUser.isPresent()) {
                 Usuario user = maybeUser.get();
                 String role = Optional.ofNullable(user.getRol()).orElse("USER");
@@ -50,7 +50,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(
-                                username,
+                                email,
                                 null,
                                 List.of(new SimpleGrantedAuthority(authority))
                         );

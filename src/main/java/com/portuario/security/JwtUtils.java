@@ -25,13 +25,14 @@ public class JwtUtils {
         return Keys.hmacShaKeyFor(Decoders.BASE64.decode(secretBase64));
     }
 
-    public String generateToken(String username, String role) {
+    // CORRECCIÓN: Se eliminó el parámetro 'String role' y la línea .claim("role", role)
+    public String generateToken(String username) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + TimeUnit.MINUTES.toMillis(expirationMinutes));
 
         return Jwts.builder()
                 .setSubject(username)
-                .claim("role", role)
+                // .claim("role", role) <--- ESTA LÍNEA CAUSABA EL ERROR
                 .setIssuedAt(now)
                 .setExpiration(expiry)
                 .signWith(getSignKey(), SignatureAlgorithm.HS256)
@@ -51,6 +52,7 @@ public class JwtUtils {
         return getAllClaims(token).getSubject();
     }
 
+    // Este método puede devolver null si no guardamos el rol, pero no romperá la compilación
     public String getRole(String token) {
         Object role = getAllClaims(token).get("role");
         return role != null ? role.toString() : null;

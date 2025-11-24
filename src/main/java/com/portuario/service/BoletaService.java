@@ -71,10 +71,11 @@ public class BoletaService {
         // Generamos un ID compuesto como string
         boleta.setIdBoleta(codBuque + "-" + idPuerto + "-" + idFuncionario + "-" + System.currentTimeMillis());
         boleta.setMonto(costo);
-        boleta.setFecha_emision(new java.sql.Date(System.currentTimeMillis()));
+        boleta.setFechaEmision(new java.sql.Date(System.currentTimeMillis()));
 
         return boletaRepository.save(boleta);
     }
+
 
     public List<Boleta> findAll(){
         return boletaRepository.findAll();
@@ -89,5 +90,31 @@ public class BoletaService {
     private long calcularHoras(LocalDateTime llegada, LocalDateTime partida) {
         if (llegada == null || partida == null) return 0;
         return Duration.between(llegada, partida).toHours();
+    }
+
+
+    public double calcularSimulacion(double eslora, int dias, String tipoBuque, String servicios, int pasajeros) {
+        double tarifaBase = eslora * 10.0;
+
+        switch (tipoBuque.toLowerCase()) {
+            case "pesquero": tarifaBase *= 0.8; break;
+            case "militar": tarifaBase *= 1.5; break;
+            case "investigacion": tarifaBase *= 1.2; break;
+            case "crucero": tarifaBase *= 2.0; break;
+            default: break;
+        }
+
+        double costoPasajeros = pasajeros * 5.0;
+
+        double costoServicios = 0;
+        if (servicios != null) {
+            switch (servicios.toLowerCase()) {
+                case "medio": costoServicios = 500; break;
+                case "completo": costoServicios = 1500; break;
+                default: break;
+            }
+        }
+
+        return ((tarifaBase + costoPasajeros) * dias) + costoServicios;
     }
 }
